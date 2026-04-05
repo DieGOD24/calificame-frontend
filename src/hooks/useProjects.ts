@@ -1,0 +1,337 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import api from "@/lib/api";
+import type { Project, ProjectConfig, Question, AnswerKey, StudentExam, GradingSummary } from "@/types/project";
+import type { PaginatedResponse } from "@/types/api";
+
+export function useProjects() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [answerKeys, setAnswerKeys] = useState<AnswerKey[]>([]);
+  const [studentExams, setStudentExams] = useState<StudentExam[]>([]);
+  const [summary, setSummary] = useState<GradingSummary | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const clearError = useCallback(() => setError(null), []);
+
+  const fetchProjects = useCallback(async (page = 1, perPage = 20) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.get<PaginatedResponse<Project>>("/projects", {
+        params: { page, per_page: perPage },
+      });
+      setProjects(response.data.items);
+      return response.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al cargar proyectos";
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const fetchProject = useCallback(async (id: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.get<Project>(`/projects/${id}`);
+      setCurrentProject(response.data);
+      return response.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al cargar el proyecto";
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const createProject = useCallback(
+    async (data: { name: string; description?: string; subject?: string }) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await api.post<Project>("/projects", data);
+        setProjects((prev) => [response.data, ...prev]);
+        return response.data;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Error al crear el proyecto";
+        setError(message);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  const updateProjectConfig = useCallback(
+    async (projectId: string, config: ProjectConfig) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await api.put<Project>(
+          `/projects/${projectId}/config`,
+          config
+        );
+        setCurrentProject(response.data);
+        return response.data;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Error al actualizar configuracion";
+        setError(message);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  const uploadAnswerKey = useCallback(
+    async (projectId: string, file: File) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await api.post<AnswerKey>(
+          `/projects/${projectId}/answer-key`,
+          formData,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
+        return response.data;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Error al subir solucionario";
+        setError(message);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  const processAnswerKey = useCallback(async (projectId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.post<Project>(
+        `/projects/${projectId}/answer-key/process`
+      );
+      setCurrentProject(response.data);
+      return response.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al procesar solucionario";
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const fetchQuestions = useCallback(async (projectId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.get<Question[]>(
+        `/projects/${projectId}/questions`
+      );
+      setQuestions(response.data);
+      return response.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al cargar preguntas";
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const updateQuestion = useCallback(
+    async (
+      projectId: string,
+      questionId: string,
+      data: Partial<Question>
+    ) => {
+      setError(null);
+      try {
+        const response = await api.put<Question>(
+          `/projects/${projectId}/questions/${questionId}`,
+          data
+        );
+        setQuestions((prev) =>
+          prev.map((q) => (q.id === questionId ? response.data : q))
+        );
+        return response.data;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Error al actualizar pregunta";
+        setError(message);
+        throw err;
+      }
+    },
+    []
+  );
+
+  const confirmQuestions = useCallback(async (projectId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.post<Project>(
+        `/projects/${projectId}/confirm`
+      );
+      setCurrentProject(response.data);
+      return response.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al confirmar preguntas";
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const uploadStudentExams = useCallback(
+    async (projectId: string, files: File[]) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const formData = new FormData();
+        files.forEach((file) => {
+          formData.append("files", file);
+        });
+        const response = await api.post<StudentExam[]>(
+          `/projects/${projectId}/exams`,
+          formData,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
+        setStudentExams((prev) => [...prev, ...response.data]);
+        return response.data;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Error al subir examenes";
+        setError(message);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  const fetchStudentExams = useCallback(async (projectId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.get<StudentExam[]>(
+        `/projects/${projectId}/exams`
+      );
+      setStudentExams(response.data);
+      return response.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al cargar examenes";
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const gradeExams = useCallback(async (projectId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.post<Project>(
+        `/projects/${projectId}/grade`
+      );
+      setCurrentProject(response.data);
+      return response.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al calificar examenes";
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const fetchGradingSummary = useCallback(async (projectId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.get<GradingSummary>(
+        `/projects/${projectId}/summary`
+      );
+      setSummary(response.data);
+      return response.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al cargar resumen";
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const fetchExamDetail = useCallback(
+    async (projectId: string, examId: string) => {
+      setError(null);
+      try {
+        const response = await api.get<StudentExam>(
+          `/projects/${projectId}/exams/${examId}`
+        );
+        return response.data;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Error al cargar detalle del examen";
+        setError(message);
+        throw err;
+      }
+    },
+    []
+  );
+
+  const fetchAnswerKeys = useCallback(async (projectId: string) => {
+    setError(null);
+    try {
+      const response = await api.get<AnswerKey[]>(
+        `/projects/${projectId}/answer-key`
+      );
+      setAnswerKeys(response.data);
+      return response.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al cargar solucionarios";
+      setError(message);
+      throw err;
+    }
+  }, []);
+
+  return {
+    projects,
+    currentProject,
+    questions,
+    answerKeys,
+    studentExams,
+    summary,
+    isLoading,
+    error,
+    clearError,
+    fetchProjects,
+    fetchProject,
+    createProject,
+    updateProjectConfig,
+    uploadAnswerKey,
+    processAnswerKey,
+    fetchQuestions,
+    updateQuestion,
+    confirmQuestions,
+    uploadStudentExams,
+    fetchStudentExams,
+    gradeExams,
+    fetchGradingSummary,
+    fetchExamDetail,
+    fetchAnswerKeys,
+  };
+}
