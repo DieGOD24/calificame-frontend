@@ -2,94 +2,165 @@ name: Frontend CI
 
 on:
   push:
-    branches: [main]
+    branches: [master, main]
   pull_request:
-    branches: [main]
+    branches: [master, main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:
-    name: Lint & Type Check
+    name: "Lint & Type Check"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+
       - name: Install dependencies
-        working-directory: frontend
         run: npm ci
-      - name: Run ESLint
-        working-directory: frontend
+
+      - name: ESLint
         run: npm run lint
-      - name: Run Type Check
-        working-directory: frontend
+
+      - name: TypeScript type check
         run: npm run type-check
 
   test:
-    name: Unit Tests
+    name: "Unit Tests"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+
       - name: Install dependencies
-        working-directory: frontend
         run: npm ci
+
       - name: Run tests with coverage
-        working-directory: frontend
         run: npm run test:coverage
-      - name: Check coverage threshold
-        working-directory: frontend
+
+      - name: Verify test count
         run: |
-          COVERAGE=$(npx vitest run --coverage --reporter=json 2>/dev/null | grep -o '"lines":[0-9.]*' | head -1 | grep -o '[0-9.]*' || echo "0")
-          echo "Coverage: $COVERAGE%"
+          RESULT=$(npm test 2>&1)
+          PASSED=$(echo "$RESULT" | grep -oP '\d+ passed' | grep -oP '\d+')
+          echo "Tests passed: $PASSED"
+          if [ "$PASSED" -lt 50 ]; then
+            echo "ERROR: Expected at least 50 tests, got $PASSED"
+            exit 1
+          fi
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
 
   build:
-    name: Build
+    name: "Build"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+
       - name: Install dependencies
-        working-directory: frontend
         run: npm ci
+
       - name: Build application
-        working-directory: frontend
         run: npm run build
 
+      - name: Verify build output
+        run: |
+          test -d .next || (echo "ERROR: .next directory not found" && exit 1)
+          echo "Build output verified"
+
+      - name: Check bundle size
+        run: |
+          SIZE=$(du -sh .next/ | cut -f1)
+          echo "Bundle size: $SIZE"
+
   e2e:
-    name: E2E Tests
+    name: "E2E Tests"
     runs-on: ubuntu-latest
     needs: build
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+
       - name: Install dependencies
-        working-directory: frontend
         run: npm ci
+
       - name: Install Playwright browsers
-        working-directory: frontend
         run: npx playwright install --with-deps chromium
+
       - name: Run E2E tests
-        working-directory: frontend
         run: npm run test:e2e
+
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report
-          path: frontend/playwright-report/
+          path: playwright-report/
           retention-days: 7
+
+  docker:
+    name: "Docker Build"
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t calificame-frontend:test .
+
+      - name: Verify container starts
+        run: |
+          docker run -d --name test-frontend \
+            -e NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1 \
+            -p 3000:3000 \
+            calificame-frontend:test
+          sleep 8
+          curl -f http://localhost:3000 || (docker logs test-frontend && exit 1)
+          docker stop test-frontend
+
+  security:
+    name: "Security Audit"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm audit
+        run: npm audit --omit=dev || true
+
+      - name: Check for secrets in code
+        run: |
+          echo "Checking for hardcoded secrets..."
+          ! grep -rn "sk-[a-zA-Z0-9]\{20,\}" src/ || echo "WARNING: Possible API key found"
+          ! grep -rn "password\s*=\s*[\"'][^\"']\{8,\}" src/ --include="*.ts" --include="*.tsx" | grep -v "test" | grep -v "placeholder" || true

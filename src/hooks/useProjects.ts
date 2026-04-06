@@ -76,8 +76,8 @@ export function useProjects() {
       setError(null);
       try {
         const response = await api.put<Project>(
-          `/projects/${projectId}/config`,
-          config
+          `/projects/${projectId}`,
+          { config }
         );
         setCurrentProject(response.data);
         return response.data;
@@ -100,7 +100,7 @@ export function useProjects() {
         const formData = new FormData();
         formData.append("file", file);
         const response = await api.post<AnswerKey>(
-          `/projects/${projectId}/answer-key`,
+          `/projects/${projectId}/answer-key/upload`,
           formData,
           { headers: { "Content-Type": "multipart/form-data" } }
         );
@@ -181,10 +181,11 @@ export function useProjects() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.post<Project>(
-        `/projects/${projectId}/confirm`
+      const response = await api.post<Question[]>(
+        `/projects/${projectId}/questions/confirm-all`,
+        { confirm_all: true }
       );
-      setCurrentProject(response.data);
+      setQuestions(response.data);
       return response.data;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al confirmar preguntas";
@@ -205,7 +206,7 @@ export function useProjects() {
           formData.append("files", file);
         });
         const response = await api.post<StudentExam[]>(
-          `/projects/${projectId}/exams`,
+          `/projects/${projectId}/exams/upload`,
           formData,
           { headers: { "Content-Type": "multipart/form-data" } }
         );
@@ -226,11 +227,12 @@ export function useProjects() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.get<StudentExam[]>(
-        `/projects/${projectId}/exams`
+      const response = await api.get<{ items: StudentExam[] }>(
+        `/projects/${projectId}/exams/`
       );
-      setStudentExams(response.data);
-      return response.data;
+      const items = response.data.items ?? response.data;
+      setStudentExams(items as StudentExam[]);
+      return items;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al cargar examenes";
       setError(message);
@@ -240,14 +242,15 @@ export function useProjects() {
     }
   }, []);
 
-  const gradeExams = useCallback(async (projectId: string) => {
+  const gradeExams = useCallback(async (projectId: string, regrade = false) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.post<Project>(
-        `/projects/${projectId}/grade`
+      const response = await api.post<StudentExam[]>(
+        `/projects/${projectId}/grading/grade-all`,
+        null,
+        { params: regrade ? { regrade: true } : undefined }
       );
-      setCurrentProject(response.data);
       return response.data;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al calificar examenes";
@@ -263,7 +266,7 @@ export function useProjects() {
     setError(null);
     try {
       const response = await api.get<GradingSummary>(
-        `/projects/${projectId}/summary`
+        `/projects/${projectId}/grading/summary`
       );
       setSummary(response.data);
       return response.data;
@@ -280,10 +283,14 @@ export function useProjects() {
     async (projectId: string, examId: string) => {
       setError(null);
       try {
-        const response = await api.get<StudentExam>(
+        const response = await api.get<{ student_exam: StudentExam; answers: StudentExam["answers"] }>(
           `/projects/${projectId}/exams/${examId}`
         );
-        return response.data;
+        const detail: StudentExam = {
+          ...response.data.student_exam,
+          answers: response.data.answers,
+        };
+        return detail;
       } catch (err) {
         const message = err instanceof Error ? err.message : "Error al cargar detalle del examen";
         setError(message);

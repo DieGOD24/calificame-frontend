@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useProjects } from "@/hooks/useProjects";
-import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { Card, CardBody, CardHeader, CardFooter } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { ProjectConfigForm } from "@/components/projects/ProjectConfigForm";
+import type { ProjectConfigFormData } from "@/lib/validations";
 import { formatDate, getStatusLabel } from "@/lib/utils";
 import {
   Upload,
@@ -17,6 +19,8 @@ import {
   Settings,
   ArrowRight,
   AlertCircle,
+  Pencil,
+  X,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -26,10 +30,13 @@ export default function ProjectDetailPage() {
   const {
     currentProject: project,
     fetchProject,
+    updateProjectConfig,
     processAnswerKey,
     isLoading,
     error,
   } = useProjects();
+
+  const [isEditingConfig, setIsEditingConfig] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -290,13 +297,23 @@ export default function ProjectDetailPage() {
         </Card>
       )}
 
-      {/* Project info */}
-      {project.config && (
+      {/* Project config */}
+      {project.config && !isEditingConfig && (
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold text-gray-900">
-              Configuracion
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Configuracion
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditingConfig(true)}
+                leftIcon={<Pencil className="h-4 w-4" />}
+              >
+                Editar
+              </Button>
+            </div>
           </CardHeader>
           <CardBody>
             <dl className="grid grid-cols-2 gap-4 text-sm">
@@ -339,6 +356,85 @@ export default function ProjectDetailPage() {
                 </dd>
               </div>
             )}
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Edit config form */}
+      {isEditingConfig && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Editar Configuracion
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditingConfig(false)}
+                leftIcon={<X className="h-4 w-4" />}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </CardHeader>
+          <CardBody>
+            <ProjectConfigForm
+              defaultValues={
+                project.config
+                  ? {
+                      exam_type: project.config.exam_type,
+                      total_questions: project.config.total_questions,
+                      points_per_question:
+                        project.config.points_per_question ?? undefined,
+                      has_multiple_pages: project.config.has_multiple_pages,
+                      additional_instructions:
+                        project.config.additional_instructions ?? "",
+                    }
+                  : undefined
+              }
+              onSubmit={async (data: ProjectConfigFormData) => {
+                try {
+                  await updateProjectConfig(id, {
+                    exam_type: data.exam_type,
+                    total_questions: data.total_questions,
+                    points_per_question: data.points_per_question,
+                    has_multiple_pages: data.has_multiple_pages,
+                    additional_instructions: data.additional_instructions,
+                  });
+                  await fetchProject(id);
+                  setIsEditingConfig(false);
+                  toast.success("Configuracion actualizada");
+                } catch {
+                  toast.error("Error al actualizar la configuracion");
+                }
+              }}
+              isLoading={isLoading}
+            />
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Show config section placeholder when no config exists */}
+      {!project.config && !isEditingConfig && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Configuracion
+            </h2>
+          </CardHeader>
+          <CardBody>
+            <p className="text-gray-500 mb-4">
+              No se ha configurado el examen. Agrega la configuracion para
+              continuar.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditingConfig(true)}
+              leftIcon={<Settings className="h-4 w-4" />}
+            >
+              Configurar Examen
+            </Button>
           </CardBody>
         </Card>
       )}

@@ -14,6 +14,7 @@ export function useAuth(requireAuth = false) {
     login,
     register,
     logout,
+    fetchUser,
     initialize,
   } = useAuthStore();
 
@@ -35,5 +36,6 @@ export function useAuth(requireAuth = false) {
     login,
     register,
     logout,
+    fetchUser,
   };
 }

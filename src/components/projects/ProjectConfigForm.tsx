@@ -98,7 +98,7 @@ export function ProjectConfigForm({
       <Input
         label="Puntos por pregunta"
         type="number"
-        step="0.1"
+        step="any"
         error={errors.points_per_question?.message}
         {...register("points_per_question", { valueAsNumber: true })}
       />
