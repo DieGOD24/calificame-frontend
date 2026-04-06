@@ -79,7 +79,7 @@ test.describe("Projects", () => {
   test("authenticated user sees projects list", async ({ page }) => {
     await page.goto("/projects");
     await expect(page.getByText("Examen Matematicas")).toBeVisible();
-    await expect(page.getByText("Matematicas")).toBeVisible();
+    await expect(page.getByText("Matematicas", { exact: true })).toBeVisible();
   });
 
   test("user can create a new project", async ({ page }) => {

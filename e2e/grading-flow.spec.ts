@@ -54,8 +54,8 @@ test.describe("Grading Flow", () => {
       }
     });
 
-    // Mock config
-    await page.route("**/api/v1/projects/flow-project/config", async (route) => {
+    // Mock project detail (GET and PUT)
+    await page.route("**/api/v1/projects/flow-project", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -63,81 +63,67 @@ test.describe("Grading Flow", () => {
           id: "flow-project",
           owner_id: "user-1",
           name: "Examen de Prueba",
-          status: "configuring",
+          description: "Test exam",
+          subject: "Ciencias",
+          status: "completed",
           config: { exam_type: "multiple_choice", total_questions: 5, points_per_question: 2, has_multiple_pages: false },
           created_at: "2026-04-01T10:00:00Z",
           updated_at: "2026-04-01T10:00:00Z",
+          questions_count: 5,
+          exams_count: 2,
+          graded_count: 2,
         }),
       });
     });
 
-    // Mock project detail
-    await page.route("**/api/v1/projects/flow-project", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            id: "flow-project",
-            owner_id: "user-1",
-            name: "Examen de Prueba",
-            description: "Test exam",
-            subject: "Ciencias",
-            status: "completed",
-            config: { exam_type: "multiple_choice", total_questions: 5, points_per_question: 2, has_multiple_pages: false },
-            created_at: "2026-04-01T10:00:00Z",
-            updated_at: "2026-04-01T10:00:00Z",
-            questions_count: 5,
-            exams_count: 2,
-            graded_count: 2,
-          }),
-        });
-      }
-    });
-
     // Mock results endpoints
-    await page.route("**/api/v1/projects/flow-project/exams", async (route) => {
+    await page.route("**/api/v1/projects/flow-project/exams/**", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify([
-          {
-            id: "exam-1",
-            project_id: "flow-project",
-            student_name: "Ana Lopez",
-            student_identifier: "2026001",
-            original_filename: "ana_exam.pdf",
-            file_type: "pdf",
-            status: "graded",
-            total_score: 8,
-            max_score: 10,
-            grade_percentage: 80,
-            grading_details: null,
-            error_message: null,
-            created_at: "2026-04-01T11:00:00Z",
-            graded_at: "2026-04-01T11:05:00Z",
-          },
-          {
-            id: "exam-2",
-            project_id: "flow-project",
-            student_name: "Carlos Ruiz",
-            student_identifier: "2026002",
-            original_filename: "carlos_exam.pdf",
-            file_type: "pdf",
-            status: "graded",
-            total_score: 6,
-            max_score: 10,
-            grade_percentage: 60,
-            grading_details: null,
-            error_message: null,
-            created_at: "2026-04-01T11:00:00Z",
-            graded_at: "2026-04-01T11:05:00Z",
-          },
-        ]),
+        body: JSON.stringify({
+          items: [
+            {
+              id: "exam-1",
+              project_id: "flow-project",
+              student_name: "Ana Lopez",
+              student_identifier: "2026001",
+              original_filename: "ana_exam.pdf",
+              file_type: "pdf",
+              status: "graded",
+              total_score: 8,
+              max_score: 10,
+              grade_percentage: 80,
+              grading_details: null,
+              error_message: null,
+              created_at: "2026-04-01T11:00:00Z",
+              graded_at: "2026-04-01T11:05:00Z",
+            },
+            {
+              id: "exam-2",
+              project_id: "flow-project",
+              student_name: "Carlos Ruiz",
+              student_identifier: "2026002",
+              original_filename: "carlos_exam.pdf",
+              file_type: "pdf",
+              status: "graded",
+              total_score: 6,
+              max_score: 10,
+              grade_percentage: 60,
+              grading_details: null,
+              error_message: null,
+              created_at: "2026-04-01T11:00:00Z",
+              graded_at: "2026-04-01T11:05:00Z",
+            },
+          ],
+          total: 2,
+          graded_count: 2,
+          average_score: 70,
+        }),
       });
     });
 
-    await page.route("**/api/v1/projects/flow-project/summary", async (route) => {
+    await page.route("**/api/v1/projects/flow-project/grading/summary", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
