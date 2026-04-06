@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { Card, CardBody } from "@/components/ui/Card";
 import { ArrowLeft, RefreshCw, Upload } from "lucide-react";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import type { TaskLog } from "@/types/task";
 
 export default function ResultsPage() {
   const params = useParams();
@@ -23,10 +25,12 @@ export default function ResultsPage() {
     fetchGradingSummary,
     fetchExamDetail,
     gradeExams,
+    pollTaskProgress,
     isLoading,
   } = useProjects();
 
   const [isRegrading, setIsRegrading] = useState(false);
+  const [gradingTask, setGradingTask] = useState<TaskLog | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -42,8 +46,15 @@ export default function ResultsPage() {
 
   const handleRegrade = async () => {
     setIsRegrading(true);
+    setGradingTask(null);
     try {
-      await gradeExams(id, true);
+      const task = await gradeExams(id, true);
+      if (task && task.id) {
+        setGradingTask(task);
+        await pollTaskProgress(task.id, (updatedTask) => {
+          setGradingTask({ ...updatedTask });
+        });
+      }
       await fetchStudentExams(id);
       await fetchGradingSummary(id);
       toast.success("Examenes recalificados exitosamente");
@@ -51,6 +62,7 @@ export default function ResultsPage() {
       toast.error("Error al recalificar");
     } finally {
       setIsRegrading(false);
+      setGradingTask(null);
     }
   };
 
@@ -104,6 +116,45 @@ export default function ResultsPage() {
         </div>
       </div>
 
+      {/* Grading Progress Bar */}
+      {isRegrading && gradingTask && (
+        <Card>
+          <CardBody className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-gray-900">
+                {gradingTask.status === "completed"
+                  ? "Calificacion completada"
+                  : gradingTask.status === "failed"
+                    ? "Error en la calificacion"
+                    : "Calificando examenes..."}
+              </span>
+              <span className="text-gray-500">
+                {Math.round(gradingTask.progress ?? 0)}%
+              </span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+              <motion.div
+                className={`h-3 rounded-full ${
+                  gradingTask.status === "failed"
+                    ? "bg-red-500"
+                    : gradingTask.status === "completed"
+                      ? "bg-green-500"
+                      : "bg-indigo-500"
+                }`}
+                initial={{ width: 0 }}
+                animate={{ width: `${gradingTask.progress ?? 0}%` }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              />
+            </div>
+            {gradingTask.current_step && (
+              <p className="text-xs text-gray-500">
+                {gradingTask.current_step}
+              </p>
+            )}
+          </CardBody>
+        </Card>
+      )}
+
       <GradingResults
         exams={studentExams}
         summary={summary}
@@ -115,8 +166,8 @@ export default function ResultsPage() {
         }}
       />
 
-      {/* Regrading overlay */}
-      {isRegrading && (
+      {/* Regrading overlay (only when no task tracking) */}
+      {isRegrading && !gradingTask && (
         <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
           <Card>
             <CardBody className="text-center py-8 px-12">
