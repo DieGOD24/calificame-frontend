@@ -144,7 +144,7 @@ test.describe("Grading Flow", () => {
 
     // Step 1: Navigate to create project
     await page.goto("/projects/new");
-    await expect(page.getByText(/nuevo proyecto/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /nuevo proyecto/i })).toBeVisible();
 
     // Fill out basic info
     await page.getByLabel(/nombre del proyecto/i).fill("Examen de Prueba");
