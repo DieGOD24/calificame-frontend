@@ -6,6 +6,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/hooks/useSidebar";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Menu, ChevronRight, User, LogOut } from "lucide-react";
 
 interface Breadcrumb {
@@ -46,6 +47,7 @@ export function Header() {
   const pathname = usePathname();
   const { toggle } = useSidebar();
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const breadcrumbs = getBreadcrumbs(pathname);
@@ -141,7 +143,7 @@ export function Header() {
                 onClick={() => setIsDropdownOpen(false)}
               >
                 <User className="h-4 w-4" />
-                Mi Perfil
+                {t("nav.profile")}
               </Link>
               <button
                 onClick={() => {
@@ -152,7 +154,7 @@ export function Header() {
                 role="menuitem"
               >
                 <LogOut className="h-4 w-4" />
-                Cerrar Sesion
+                {t("nav.logout")}
               </button>
             </div>
           )}
