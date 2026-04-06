@@ -37,13 +37,11 @@ export default function ProfilePage() {
       await fetchUser();
       toast.success("Perfil actualizado");
     } catch (err: unknown) {
-      const message =
-        err &&
-        typeof err === "object" &&
-        "response" in err &&
-        (err as { response?: { data?: { detail?: string } } }).response?.data
-          ?.detail;
-      toast.error(message || "Error al actualizar perfil");
+      const detail =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : undefined;
+      toast.error(detail ?? "Error al actualizar perfil");
     } finally {
       setIsSaving(false);
     }
@@ -70,13 +68,11 @@ export default function ProfilePage() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: unknown) {
-      const message =
-        err &&
-        typeof err === "object" &&
-        "response" in err &&
-        (err as { response?: { data?: { detail?: string } } }).response?.data
-          ?.detail;
-      toast.error(message || "Error al cambiar contrasena");
+      const detail =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : undefined;
+      toast.error(detail ?? "Error al cambiar contrasena");
     } finally {
       setIsChangingPassword(false);
     }

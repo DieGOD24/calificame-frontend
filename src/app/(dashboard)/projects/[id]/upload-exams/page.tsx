@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useProjects } from "@/hooks/useProjects";
 import { ExamUploader } from "@/components/projects/ExamUploader";
@@ -22,7 +22,6 @@ import {
 
 export default function UploadExamsPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
   const {
     currentProject: project,
