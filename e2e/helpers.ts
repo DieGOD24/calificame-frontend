@@ -79,6 +79,8 @@ export async function loginAsMock(page: Page, user = mockUser) {
     });
   });
 
+  // Navigate to the app first so localStorage is accessible
+  await page.goto("/login");
   await page.evaluate((token) => {
     localStorage.setItem("token", token);
   }, "mock-jwt-token");
