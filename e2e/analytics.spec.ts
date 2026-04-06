@@ -62,7 +62,7 @@ test.describe("Analytics", () => {
     // Select project from dropdown
     const selector = page.getByRole("combobox").or(page.locator("select"));
     if (await selector.isVisible()) {
-      await selector.selectOption({ label: /matematicas/i });
+      await selector.selectOption({ index: 1 });
       await expect(page.getByText(/72/)).toBeVisible(); // average percentage
     }
   });
