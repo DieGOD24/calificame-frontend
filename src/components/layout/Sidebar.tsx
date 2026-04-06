@@ -43,12 +43,12 @@ const mainNavItems: NavItem[] = [
 
 const bottomNavItems: NavItem[] = [
   {
-    href: "/dashboard",
+    href: "/settings",
     label: "Configuracion",
     icon: <Settings className="h-5 w-5" />,
   },
   {
-    href: "/dashboard",
+    href: "/profile",
     label: "Perfil",
     icon: <User className="h-5 w-5" />,
   },
@@ -61,6 +61,7 @@ export function Sidebar() {
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
+    if (href === "/projects/new") return pathname === "/projects/new";
     return pathname.startsWith(href);
   };
 
@@ -128,7 +129,10 @@ export function Sidebar() {
             key={item.label}
             href={item.href}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors",
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+              isActive(item.href)
+                ? "bg-indigo-50 text-indigo-700"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
               isCollapsed && "justify-center px-2"
             )}
             title={isCollapsed ? item.label : undefined}

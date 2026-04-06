@@ -65,7 +65,7 @@ export const projectConfigSchema = z.object({
     .max(200, "Maximo 200 preguntas"),
   points_per_question: z
     .number()
-    .min(0.1, "Los puntos deben ser mayores a 0")
+    .min(0.01, "Los puntos deben ser mayores a 0")
     .optional(),
   has_multiple_pages: z.boolean(),
   additional_instructions: z

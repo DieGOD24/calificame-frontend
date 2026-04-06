@@ -1,1 +1,94 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-dark-bg: #111827;
+  --color-dark-card: #1f2937;
+  --color-dark-border: #374151;
+  --color-dark-text: #f9fafb;
+  --color-dark-text-secondary: #9ca3af;
+  --color-dark-hover: #374151;
+}
+
+/* Dark mode base styles */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  background-color: var(--color-dark-bg);
+  color: var(--color-dark-text);
+}
+
+/* Dark mode overrides for common patterns */
+.dark .bg-white {
+  background-color: var(--color-dark-card);
+}
+
+.dark .bg-gray-50 {
+  background-color: #1a2332;
+}
+
+.dark .bg-gray-100 {
+  background-color: var(--color-dark-bg);
+}
+
+.dark .border-gray-200,
+.dark .border-gray-100 {
+  border-color: var(--color-dark-border);
+}
+
+.dark .text-gray-900 {
+  color: var(--color-dark-text);
+}
+
+.dark .text-gray-700 {
+  color: #d1d5db;
+}
+
+.dark .text-gray-600 {
+  color: #9ca3af;
+}
+
+.dark .text-gray-500 {
+  color: #9ca3af;
+}
+
+.dark .text-gray-400 {
+  color: #6b7280;
+}
+
+.dark .hover\:bg-gray-50:hover {
+  background-color: var(--color-dark-hover);
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background-color: var(--color-dark-hover);
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: var(--color-dark-bg);
+  border-color: var(--color-dark-border);
+  color: var(--color-dark-text);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6b7280;
+}
+
+.dark .divide-gray-100 > :not(:last-child),
+.dark .divide-gray-200 > :not(:last-child) {
+  border-color: var(--color-dark-border);
+}
+
+.dark table thead {
+  background-color: #1a2332;
+}
+
+.dark table tbody tr:hover {
+  background-color: var(--color-dark-hover);
+}

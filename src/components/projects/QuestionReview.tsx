@@ -105,7 +105,7 @@ export function QuestionReview({
                     <Input
                       label="Puntos"
                       type="number"
-                      step="0.1"
+                      step="any"
                       value={editValues.points}
                       onChange={(e) =>
                         setEditValues((prev) => ({

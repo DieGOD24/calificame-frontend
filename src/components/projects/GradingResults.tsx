@@ -8,12 +8,25 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { formatPercentage } from "@/lib/utils";
 import { ExamDetailModal } from "./ExamDetailModal";
 import type { StudentExam, GradingSummary } from "@/types/project";
-import { BarChart3, Download, Eye, ArrowUpDown } from "lucide-react";
+import api from "@/lib/api";
+import {
+  BarChart3,
+  Download,
+  Eye,
+  ArrowUpDown,
+  Pencil,
+  Check,
+  X,
+  Trash2,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 interface GradingResultsProps {
   exams: StudentExam[];
   summary: GradingSummary | null;
   onFetchExamDetail: (examId: string) => Promise<StudentExam>;
+  projectId?: string;
+  onExamsUpdated?: () => void;
 }
 
 type SortField = "student_name" | "total_score" | "grade_percentage" | "status";
@@ -23,12 +36,19 @@ export function GradingResults({
   exams,
   summary,
   onFetchExamDetail,
+  projectId,
+  onExamsUpdated,
 }: GradingResultsProps) {
   const [selectedExam, setSelectedExam] = useState<StudentExam | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [sortField, setSortField] = useState<SortField>("student_name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
+  // Inline editing state
+  const [editingExamId, setEditingExamId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editIdentifier, setEditIdentifier] = useState("");
 
   const handleViewDetail = async (exam: StudentExam) => {
     setIsLoadingDetail(true);
@@ -49,6 +69,45 @@ export function GradingResults({
     } else {
       setSortField(field);
       setSortDirection("asc");
+    }
+  };
+
+  const startEditing = (exam: StudentExam) => {
+    setEditingExamId(exam.id);
+    setEditName(exam.student_name || "");
+    setEditIdentifier(exam.student_identifier || "");
+  };
+
+  const cancelEditing = () => {
+    setEditingExamId(null);
+    setEditName("");
+    setEditIdentifier("");
+  };
+
+  const saveEditing = async (exam: StudentExam) => {
+    const pid = projectId || exam.project_id;
+    try {
+      await api.patch(`/projects/${pid}/exams/${exam.id}`, {
+        student_name: editName || null,
+        student_identifier: editIdentifier || null,
+      });
+      toast.success("Datos del alumno actualizados");
+      setEditingExamId(null);
+      onExamsUpdated?.();
+    } catch {
+      toast.error("Error al actualizar datos del alumno");
+    }
+  };
+
+  const handleDeleteExam = async (exam: StudentExam) => {
+    if (!confirm("¿Eliminar este resultado? Esta accion no se puede deshacer.")) return;
+    const pid = projectId || exam.project_id;
+    try {
+      await api.delete(`/projects/${pid}/exams/${exam.id}`);
+      toast.success("Resultado eliminado");
+      onExamsUpdated?.();
+    } catch {
+      toast.error("Error al eliminar resultado");
     }
   };
 
@@ -215,12 +274,43 @@ export function GradingResults({
             <tbody className="divide-y divide-gray-100">
               {sortedExams.map((exam) => (
                 <tr key={exam.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">
-                    {exam.student_name || "Sin nombre"}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">
-                    {exam.student_identifier || "-"}
-                  </td>
+                  {/* Name / Identifier - editable */}
+                  {editingExamId === exam.id ? (
+                    <>
+                      <td className="px-4 py-2">
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          placeholder="Nombre del alumno"
+                          className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          autoFocus
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="text"
+                          value={editIdentifier}
+                          onChange={(e) => setEditIdentifier(e.target.value)}
+                          placeholder="ID / Cedula"
+                          className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        {exam.student_name || (
+                          <span className="text-gray-400 italic">
+                            Sin nombre
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {exam.student_identifier || "-"}
+                      </td>
+                    </>
+                  )}
                   <td className="px-4 py-3 text-gray-900">
                     {exam.total_score !== null
                       ? `${exam.total_score}/${exam.max_score}`
@@ -242,15 +332,56 @@ export function GradingResults({
                     <Badge status={exam.status} />
                   </td>
                   <td className="px-4 py-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleViewDetail(exam)}
-                      isLoading={isLoadingDetail}
-                      leftIcon={<Eye className="h-4 w-4" />}
-                    >
-                      Ver
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      {editingExamId === exam.id ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => saveEditing(exam)}
+                            aria-label="Guardar"
+                          >
+                            <Check className="h-4 w-4 text-green-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={cancelEditing}
+                            aria-label="Cancelar"
+                          >
+                            <X className="h-4 w-4 text-gray-400" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => startEditing(exam)}
+                            aria-label="Editar alumno"
+                          >
+                            <Pencil className="h-4 w-4 text-gray-400 hover:text-indigo-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewDetail(exam)}
+                            isLoading={isLoadingDetail}
+                            aria-label="Ver detalle"
+                          >
+                            <Eye className="h-4 w-4 text-gray-400 hover:text-indigo-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteExam(exam)}
+                            aria-label="Eliminar resultado"
+                          >
+                            <Trash2 className="h-4 w-4 text-gray-400 hover:text-red-600" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
