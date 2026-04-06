@@ -71,6 +71,7 @@ export const mockProjects = {
 };
 
 export async function loginAsMock(page: Page, user = mockUser) {
+  // Mock auth/me BEFORE any navigation
   await page.route("**/api/v1/auth/me", async (route) => {
     await route.fulfill({
       status: 200,
@@ -79,26 +80,43 @@ export async function loginAsMock(page: Page, user = mockUser) {
     });
   });
 
-  // Navigate to the app first so localStorage is accessible
-  await page.goto("/login");
-  await page.evaluate((token) => {
-    localStorage.setItem("token", token);
-  }, "mock-jwt-token");
+  // Set localStorage BEFORE the page loads using addInitScript
+  await page.addInitScript(() => {
+    localStorage.setItem("access_token", "mock-jwt-token");
+  });
 }
 
 export async function setupProjectRoutes(page: Page) {
-  await page.route("**/api/v1/projects?*", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(mockProjects),
-    });
-  });
+  await page.route("**/api/v1/projects**", async (route) => {
+    const url = route.request().url();
+    const method = route.request().method();
 
-  await page.route("**/api/v1/projects/project-1", async (route) => {
-    if (route.request().method() === "GET") {
+    // Don't intercept sub-resource routes like /projects/id/exams, /projects/id/grading, etc.
+    const projectSubRoute = url.match(/\/projects\/[^/?]+\//);
+    if (projectSubRoute) {
+      await route.continue();
+      return;
+    }
+
+    if (method === "GET") {
+      // Single project GET: /projects/project-1
+      if (url.match(/\/projects\/[^/?]+$/)) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(mockProject),
+        });
+      } else {
+        // List endpoint: /projects or /projects?page=...
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(mockProjects),
+        });
+      }
+    } else if (method === "POST") {
       await route.fulfill({
-        status: 200,
+        status: 201,
         contentType: "application/json",
         body: JSON.stringify(mockProject),
       });

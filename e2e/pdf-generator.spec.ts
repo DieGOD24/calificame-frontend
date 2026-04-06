@@ -8,12 +8,14 @@ test.describe("PDF Generator", () => {
 
   test("shows PDF generator page", async ({ page }) => {
     await page.goto("/pdf-generator");
-    await expect(page.getByText(/generador|generator|pdf/i)).toBeVisible();
+    // Page title is "Generador de PDF"
+    await expect(page.getByRole("heading", { name: /Generador de PDF/i })).toBeVisible();
   });
 
   test("shows upload area on step 1", async ({ page }) => {
     await page.goto("/pdf-generator");
-    await expect(page.getByText(/arrastra|drag|subir|upload/i)).toBeVisible();
+    // Drop zone text is "Arrastra fotos aqui o haz clic para seleccionar"
+    await expect(page.getByText(/Arrastra fotos aqui/i)).toBeVisible();
   });
 
   test("shows step indicators", async ({ page }) => {

@@ -13,21 +13,21 @@ const mockAnalytics = {
   average_percentage: 72.0,
   pass_rate: 80.0,
   score_distribution: [
-    { range_label: "0-10", count: 0 },
-    { range_label: "10-20", count: 1 },
-    { range_label: "20-30", count: 1 },
-    { range_label: "30-40", count: 2 },
-    { range_label: "40-50", count: 3 },
-    { range_label: "50-60", count: 2 },
-    { range_label: "60-70", count: 4 },
-    { range_label: "70-80", count: 5 },
-    { range_label: "80-90", count: 4 },
-    { range_label: "90-100", count: 3 },
+    { range: "0-10", count: 0 },
+    { range: "10-20", count: 1 },
+    { range: "20-30", count: 1 },
+    { range: "30-40", count: 2 },
+    { range: "40-50", count: 3 },
+    { range: "50-60", count: 2 },
+    { range: "60-70", count: 4 },
+    { range: "70-80", count: 5 },
+    { range: "80-90", count: 4 },
+    { range: "90-100", count: 3 },
   ],
-  question_difficulty: [
-    { question_number: 1, question_text: "Pregunta 1", correct_count: 20, total_count: 25, success_rate: 80.0 },
-    { question_number: 2, question_text: "Pregunta 2", correct_count: 15, total_count: 25, success_rate: 60.0 },
-    { question_number: 3, question_text: "Pregunta 3", correct_count: 5, total_count: 25, success_rate: 20.0 },
+  question_stats: [
+    { question_number: 1, question_text: "Pregunta 1", success_rate: 80.0 },
+    { question_number: 2, question_text: "Pregunta 2", success_rate: 60.0 },
+    { question_number: 3, question_text: "Pregunta 3", success_rate: 20.0 },
   ],
 };
 
@@ -54,43 +54,40 @@ test.describe("Analytics", () => {
 
   test("analytics page shows project selector", async ({ page }) => {
     await page.goto("/analytics");
-    await expect(page.getByText(/seleccionar|select/i)).toBeVisible();
+    // The label text is "Seleccionar Proyecto"
+    await expect(page.getByText("Seleccionar Proyecto")).toBeVisible();
   });
 
   test("shows analytics after selecting project", async ({ page }) => {
     await page.goto("/analytics");
-    // Select project from dropdown
-    const selector = page.getByRole("combobox").or(page.locator("select"));
-    if (await selector.isVisible()) {
-      await selector.selectOption({ index: 1 });
-      await expect(page.getByText(/72/)).toBeVisible(); // average percentage
-    }
+    const selector = page.locator("select");
+    await expect(selector).toBeVisible();
+    await selector.selectOption({ index: 1 });
+    await expect(page.getByText(/72/)).toBeVisible(); // average percentage
   });
 
   test("shows score distribution chart", async ({ page }) => {
     await page.goto("/analytics");
-    const selector = page.getByRole("combobox").or(page.locator("select"));
-    if (await selector.isVisible()) {
-      await selector.selectOption({ index: 1 });
-      await expect(page.getByText(/distribucion|distribution/i)).toBeVisible();
-    }
+    const selector = page.locator("select");
+    await expect(selector).toBeVisible();
+    await selector.selectOption({ index: 1 });
+    await expect(page.getByText(/Distribucion de Puntajes/i)).toBeVisible();
   });
 
   test("shows question difficulty", async ({ page }) => {
     await page.goto("/analytics");
-    const selector = page.getByRole("combobox").or(page.locator("select"));
-    if (await selector.isVisible()) {
-      await selector.selectOption({ index: 1 });
-      await expect(page.getByText(/dificultad|difficulty/i)).toBeVisible();
-    }
+    const selector = page.locator("select");
+    await expect(selector).toBeVisible();
+    await selector.selectOption({ index: 1 });
+    await expect(page.getByText(/Dificultad por Pregunta/i)).toBeVisible();
   });
 
   test("shows pass rate", async ({ page }) => {
     await page.goto("/analytics");
-    const selector = page.getByRole("combobox").or(page.locator("select"));
-    if (await selector.isVisible()) {
-      await selector.selectOption({ index: 1 });
-      await expect(page.getByText(/80/)).toBeVisible(); // pass rate
-    }
+    const selector = page.locator("select");
+    await expect(selector).toBeVisible();
+    await selector.selectOption({ index: 1 });
+    // Pass rate card shows "Tasa de Aprobacion" label
+    await expect(page.getByText("Tasa de Aprobacion")).toBeVisible();
   });
 });
