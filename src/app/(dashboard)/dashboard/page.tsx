@@ -43,7 +43,7 @@ export default function DashboardPage() {
     }).catch(() => {});
   }, [fetchProjects]);
 
-  const recentProjects = projects.slice(0, 6);
+  const recentProjects = (projects || []).slice(0, 6);
 
   return (
     <div className="space-y-8">

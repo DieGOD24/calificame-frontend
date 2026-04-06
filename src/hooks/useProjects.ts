@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import api from "@/lib/api";
+import api, { getTask } from "@/lib/api";
 import type { Project, ProjectConfig, Question, AnswerKey, StudentExam, GradingSummary } from "@/types/project";
 import type { PaginatedResponse } from "@/types/api";
+import type { TaskLog } from "@/types/task";
 
 export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -246,7 +247,7 @@ export function useProjects() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.post<StudentExam[]>(
+      const response = await api.post<TaskLog>(
         `/projects/${projectId}/grading/grade-all`,
         null,
         { params: regrade ? { regrade: true } : undefined }
@@ -260,6 +261,28 @@ export function useProjects() {
       setIsLoading(false);
     }
   }, []);
+
+  const pollTaskProgress = useCallback(
+    async (taskId: string, onProgress?: (task: TaskLog) => void): Promise<TaskLog> => {
+      return new Promise((resolve, reject) => {
+        const interval = setInterval(async () => {
+          try {
+            const res = await getTask(taskId);
+            const task: TaskLog = res.data;
+            if (onProgress) onProgress(task);
+            if (task.status === 'completed' || task.status === 'failed') {
+              clearInterval(interval);
+              resolve(task);
+            }
+          } catch (err) {
+            clearInterval(interval);
+            reject(err);
+          }
+        }, 2000);
+      });
+    },
+    []
+  );
 
   const fetchGradingSummary = useCallback(async (projectId: string) => {
     setIsLoading(true);
@@ -337,6 +360,7 @@ export function useProjects() {
     uploadStudentExams,
     fetchStudentExams,
     gradeExams,
+    pollTaskProgress,
     fetchGradingSummary,
     fetchExamDetail,
     fetchAnswerKeys,

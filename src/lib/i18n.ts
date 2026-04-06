@@ -239,6 +239,73 @@ const translations = {
     "auth.fullName": "Nombre completo",
     "auth.noAccount": "No tienes cuenta?",
     "auth.hasAccount": "Ya tienes cuenta?",
+
+    // Roles
+    "role.developer": "Desarrollador",
+    "role.admin": "Administrador",
+    "role.institution": "Institucion",
+    "role.professor": "Profesor",
+    "role.student": "Estudiante",
+
+    // Institutions
+    "institutions.title": "Instituciones",
+    "institutions.create": "Nueva Institucion",
+    "institutions.name": "Nombre",
+    "institutions.slug": "Identificador URL",
+    "institutions.members": "Miembros",
+    "institutions.invite": "Invitar Miembro",
+    "institutions.inviteEmail": "Correo del invitado",
+    "institutions.inviteRole": "Rol",
+    "institutions.settings": "Configuracion",
+    "institutions.empty": "Sin instituciones",
+    "institutions.emptyDesc": "Crea una institucion para gestionar profesores y estudiantes.",
+
+    // Analytics
+    "analytics.title": "Analiticas",
+    "analytics.selectProject": "Seleccionar proyecto",
+    "analytics.totalExams": "Total Examenes",
+    "analytics.averageScore": "Promedio",
+    "analytics.passRate": "Tasa de Aprobacion",
+    "analytics.highLow": "Mayor / Menor",
+    "analytics.scoreDistribution": "Distribucion de Calificaciones",
+    "analytics.questionDifficulty": "Dificultad por Pregunta",
+    "analytics.successRate": "Tasa de Acierto",
+
+    // PDF Generator
+    "pdfGen.title": "Generador de PDF",
+    "pdfGen.step1": "Subir Fotos",
+    "pdfGen.step2": "Recorte y Ajuste",
+    "pdfGen.step3": "Ordenar Paginas",
+    "pdfGen.step4": "Generar PDF",
+    "pdfGen.uploadPhotos": "Arrastra fotos aqui o haz clic para seleccionar",
+    "pdfGen.acceptCrop": "Aceptar",
+    "pdfGen.retryCrop": "Reintentar",
+    "pdfGen.manualCrop": "Recorte Manual",
+    "pdfGen.generate": "Generar PDF",
+    "pdfGen.download": "Descargar PDF",
+    "pdfGen.processing": "Analizando imagenes...",
+
+    // Admin
+    "admin.title": "Panel de Administracion",
+    "admin.users": "Usuarios",
+    "admin.totalUsers": "Total Usuarios",
+    "admin.changeRole": "Cambiar Rol",
+
+    // Student Dashboard
+    "student.title": "Mis Calificaciones",
+    "student.welcome": "Bienvenido",
+    "student.noResults": "Aun no tienes calificaciones",
+    "student.noResultsDesc": "Tus resultados apareceran aqui cuando tus profesores califiquen tus examenes.",
+    "student.project": "Proyecto",
+    "student.score": "Puntaje",
+    "student.date": "Fecha",
+
+    // Navigation (new)
+    "nav.institutions": "Instituciones",
+    "nav.analytics": "Analiticas",
+    "nav.pdfGenerator": "Generador PDF",
+    "nav.admin": "Administracion",
+    "nav.studentDashboard": "Mis Calificaciones",
   },
 
   en: {
@@ -481,6 +548,73 @@ const translations = {
     "auth.fullName": "Full name",
     "auth.noAccount": "Don't have an account?",
     "auth.hasAccount": "Already have an account?",
+
+    // Roles
+    "role.developer": "Developer",
+    "role.admin": "Admin",
+    "role.institution": "Institution",
+    "role.professor": "Professor",
+    "role.student": "Student",
+
+    // Institutions
+    "institutions.title": "Institutions",
+    "institutions.create": "New Institution",
+    "institutions.name": "Name",
+    "institutions.slug": "URL Identifier",
+    "institutions.members": "Members",
+    "institutions.invite": "Invite Member",
+    "institutions.inviteEmail": "Invitee email",
+    "institutions.inviteRole": "Role",
+    "institutions.settings": "Settings",
+    "institutions.empty": "No institutions",
+    "institutions.emptyDesc": "Create an institution to manage professors and students.",
+
+    // Analytics
+    "analytics.title": "Analytics",
+    "analytics.selectProject": "Select project",
+    "analytics.totalExams": "Total Exams",
+    "analytics.averageScore": "Average",
+    "analytics.passRate": "Pass Rate",
+    "analytics.highLow": "Highest / Lowest",
+    "analytics.scoreDistribution": "Score Distribution",
+    "analytics.questionDifficulty": "Question Difficulty",
+    "analytics.successRate": "Success Rate",
+
+    // PDF Generator
+    "pdfGen.title": "PDF Generator",
+    "pdfGen.step1": "Upload Photos",
+    "pdfGen.step2": "Crop & Adjust",
+    "pdfGen.step3": "Reorder Pages",
+    "pdfGen.step4": "Generate PDF",
+    "pdfGen.uploadPhotos": "Drag photos here or click to select",
+    "pdfGen.acceptCrop": "Accept",
+    "pdfGen.retryCrop": "Retry",
+    "pdfGen.manualCrop": "Manual Crop",
+    "pdfGen.generate": "Generate PDF",
+    "pdfGen.download": "Download PDF",
+    "pdfGen.processing": "Analyzing images...",
+
+    // Admin
+    "admin.title": "Admin Panel",
+    "admin.users": "Users",
+    "admin.totalUsers": "Total Users",
+    "admin.changeRole": "Change Role",
+
+    // Student Dashboard
+    "student.title": "My Grades",
+    "student.welcome": "Welcome",
+    "student.noResults": "No grades yet",
+    "student.noResultsDesc": "Your results will appear here when your professors grade your exams.",
+    "student.project": "Project",
+    "student.score": "Score",
+    "student.date": "Date",
+
+    // Navigation (new)
+    "nav.institutions": "Institutions",
+    "nav.analytics": "Analytics",
+    "nav.pdfGenerator": "PDF Generator",
+    "nav.admin": "Administration",
+    "nav.studentDashboard": "My Grades",
   },
 } as const;
 
